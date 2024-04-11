@@ -17,25 +17,45 @@ public class TaskGenerator {
         this.scheduler = scheduler;
     }
 
-    public void generateTasks(int nTasks) {
-        for (int i = 0; i < nTasks / 2; i++) {
+    public void generateTasks(int nTasks, int interval) {
+        int firstHalf = nTasks / 2;
+        for (int i = 0; i < firstHalf; i++) {
             Task task = generateTask();
             scheduler.getNewTasks().add(task);
         }
-        System.out.println("Nзначально в очереди " + nTasks / 2 + " задач");
+        printProcessingState("Nзначально в очереди " + nTasks / 2 + " задач: ", interval);
+        //System.out.println("Nзначально в очереди " + nTasks / 2 + " задач: ");
+        printAllTasks(scheduler.getNewTasks(), interval);
+
         Thread thread = new Thread(() -> {
-            for (int i = 0; i < nTasks / 2; i++) {
+            for (int i = 0; i < nTasks - firstHalf; i++) {
                 Task task = generateTask();
                 scheduler.getNewTasks().add(task);
-                System.out.println("Появилась задача " + task);
+                printProcessingState("Появилась задача " + task, interval);
+                //System.out.println("Появилась задача " + task);
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(interval);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }
         });
         thread.start();
+    }
+
+    private void printAllTasks(Queue<Task> tasks, int interval) {
+        if (interval >= 1000) {
+            for (Task task : tasks) {
+                System.out.println(task);
+            }
+            System.out.println();
+        }
+    }
+
+    private void printProcessingState(String message, int interval) {
+        if (interval >= 1000) {
+            System.out.println(message);
+        }
     }
 
     private Task generateTask() {

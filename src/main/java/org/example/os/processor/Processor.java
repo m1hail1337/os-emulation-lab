@@ -10,7 +10,7 @@ public class Processor {
     private Task executionTask;
     private Thread executionThread;
 
-    public void executeTask(Task task) {
+    public void executeTask(Task task, int interval) {
         executionTask = task;
         AtomicInteger initialDuration = new AtomicInteger(task.getDuration().get());
         AtomicInteger timeToFinish = new AtomicInteger(task.getDuration().get());
@@ -18,7 +18,7 @@ public class Processor {
         executionThread = new Thread(() -> {
             while (timeToFinish.get() != 0) {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(interval);
                 } catch (InterruptedException e) {
                     break;
                 }
@@ -29,14 +29,22 @@ public class Processor {
             }
             executionTask.setState(State.SUSPENDED);
             executionTask.setDuration(initialDuration);
-            System.out.println("Задача " + executionTask + " выполнена");
+            printProcessingState("Задача " + executionTask + " выполнена", interval);
+            //System.out.println("Задача " + executionTask + " выполнена");
         });
         executionThread.start();
     }
 
-    public void interruptCurrentTask() {
+    public void interruptCurrentTask(int interval) {
         executionThread.interrupt();
-        System.out.println("Задача " + executionTask + " прервана");
+        printProcessingState("Задача " + executionTask + " прервана", interval);
+        //System.out.println("Задача " + executionTask + " прервана");
+    }
+
+    private void printProcessingState(String message, int interval) {
+        if (interval >= 1000) {
+            System.out.println(message);
+        }
     }
 
     public Task getExecutionTask() {

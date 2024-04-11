@@ -33,12 +33,12 @@ public class Scheduler {
         this.processor = processor;
     }
 
-    public void launchScheduleDaemon() {
-        launchTaskMapper();
-        launchProcessorAccessor();
+    public void launchScheduleDaemon(int interval) {
+        launchTaskMapper(interval);
+        launchProcessorAccessor(interval);
     }
 
-    private void launchTaskMapper() {
+    private void launchTaskMapper(int interval) {
         Thread thread = new Thread(() -> {
             int newTasksCounter = 0;
             while (!isAllTasksExecuted) {
@@ -50,7 +50,7 @@ public class Scheduler {
                     }
                 }
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(interval);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -59,48 +59,56 @@ public class Scheduler {
         thread.start();
     }
 
-    private void launchProcessorAccessor() {
+    private void launchProcessorAccessor(int interval) {
         Thread thread = new Thread(() -> {
            while (true) {
+               try {
+                   Thread.sleep(interval);
+               } catch (InterruptedException e) {
+                   throw new RuntimeException(e);
+               }
+
                Task currentTask = processor.getExecutionTask();
                Task toExecute = decideWhichTaskWillExecuted();
 
                if (toExecute == null) {
+                   finishedTasks.add(processor.getExecutionTask());
                    break;
                }
 
                if (currentTask == null) {
                    removeTaskFromQueues(toExecute);
-                   processor.executeTask(toExecute);
-                   System.out.println("Задача " + toExecute + " начала выполняться");
+                   processor.executeTask(toExecute, interval);
+                   printProcessingState("Задача " + toExecute + " начала выполняться", interval);
+                   //System.out.println("Задача " + toExecute + " начала выполняться");
                } else if (currentTask.getState() == State.SUSPENDED) {
                    finishedTasks.add(processor.getExecutionTask());
                    removeTaskFromQueues(toExecute);
-                   processor.executeTask(toExecute);
-                   System.out.println("Задача " + toExecute + " начала выполняться");
+                   processor.executeTask(toExecute, interval);
+                   printProcessingState("Задача " + toExecute + " начала выполняться", interval);
+                   //System.out.println("Задача " + toExecute + " начала выполняться");
                } else if (currentTask.getState() == State.RUNNING) {
                    if (toExecute.getPriority().ordinal() > currentTask.getPriority().ordinal()) {
-                       processor.interruptCurrentTask();
+                       processor.interruptCurrentTask(interval);
                        removeTaskFromQueues(toExecute);
-                       processor.executeTask(toExecute);
-                       System.out.println("Задача " + toExecute + " заменила " + currentTask);
+                       processor.executeTask(toExecute, interval);
+                       printProcessingState("Задача " + toExecute + " заменила " + currentTask, interval);
+                       //System.out.println("Задача " + toExecute + " заменила " + currentTask);
                        if (currentTask.getType() == TaskType.EXTENDED) {
                            currentTask.setState(State.WAITING);
                            waitingTasks.get(currentTask.getPriority()).add(currentTask);
-                           System.out.println(currentTask + " теперь WAITING");
+                           printProcessingState(currentTask + " теперь WAITING", interval);
+                           //System.out.println(currentTask + " теперь WAITING");
                        } else {
                            currentTask.setState(State.SUSPENDED);
                            newTasks.add(currentTask);
-                           System.out.println(currentTask + " теперь SUSPENDED");
+                           printProcessingState(currentTask + " теперь SUSPENDED", interval);
+                           //System.out.println(currentTask + " теперь SUSPENDED");
                        }
                    } else {
-                       System.out.println("Задача " + toExecute + " пока не может быть выполнена");
+                       printProcessingState("Задача " + toExecute + " пока не может быть выполнена", interval);
+                       //System.out.println("Задача " + toExecute + " пока не может быть выполнена");
                    }
-               }
-               try {
-                   Thread.sleep(1000);
-               } catch (InterruptedException e) {
-                   throw new RuntimeException(e);
                }
            }
            isAllTasksExecuted = true;
@@ -131,6 +139,16 @@ public class Scheduler {
             throw new RuntimeException();
         }
     }
+
+    private void printProcessingState(String message, int interval) {
+        if (interval >= 1000) {
+            System.out.println(message);
+        }
+    }
+
+    public Map<Priority, Queue<Task>> getReadyTasks() { return readyTasks; }
+
+    public Queue<Task> getFinishedTasks() { return finishedTasks; }
 
     public Queue<Task> getNewTasks() {
         return newTasks;

@@ -16,7 +16,7 @@ public class TestProcessor {
 
         int duration = 4;
         Task task = new Task(TaskType.MAIN, State.READY, Priority.THIRD, duration);
-        processor.executeTask(task);
+        processor.executeTask(task, 1000);
 
         Thread.sleep(1000L * duration / 2);
         Assertions.assertEquals(task, processor.getExecutionTask());
@@ -32,7 +32,7 @@ public class TestProcessor {
 
         int duration = 4;
         Task task = new Task(TaskType.EXTENDED, State.READY, Priority.THIRD, duration);
-        processor.executeTask(task);
+        processor.executeTask(task, 1000);
 
         Thread.sleep(1000L * duration / 2);
         Assertions.assertEquals(task, processor.getExecutionTask());
@@ -49,10 +49,10 @@ public class TestProcessor {
         int duration = 4;
         Task task = new Task(TaskType.MAIN, State.READY, Priority.THIRD, duration);
 
-        processor.executeTask(task);
+        processor.executeTask(task, 1000);
         Thread.sleep(1000L * duration / 2);
         Assertions.assertEquals(State.RUNNING, processor.getExecutionTask().getState());
-        processor.interruptCurrentTask();
+        processor.interruptCurrentTask(1000);
         Assertions.assertNotEquals(State.READY, processor.getExecutionTask().getState());
     }
 }
