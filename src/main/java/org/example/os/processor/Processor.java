@@ -29,7 +29,7 @@ public class Processor {
             }
             executionTask.setState(State.SUSPENDED);
             executionTask.setDuration(initialDuration);
-            System.out.println("Задача " + executionTask + "выполнена");
+            System.out.println("Задача " + executionTask + " выполнена");
         });
         executionThread.start();
     }

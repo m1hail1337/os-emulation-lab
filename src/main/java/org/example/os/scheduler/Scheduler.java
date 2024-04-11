@@ -14,6 +14,7 @@ public class Scheduler {
     private final Queue<Task> newTasks = new ConcurrentLinkedQueue<>();
 
     private final Processor processor;
+    private final Queue<Task> finishedTasks = new LinkedList<>();
     private final Map<Priority, Queue<Task>> readyTasks = new HashMap<>() {{
         put(Priority.ZERO, new LinkedList<>());
         put(Priority.FIRST, new LinkedList<>());
@@ -26,6 +27,7 @@ public class Scheduler {
         put(Priority.SECOND, new LinkedList<>());
         put(Priority.THIRD, new LinkedList<>());
     }};
+    private boolean isAllTasksExecuted = false;
 
     public Scheduler(Processor processor) {
         this.processor = processor;
@@ -39,7 +41,7 @@ public class Scheduler {
     private void launchTaskMapper() {
         Thread thread = new Thread(() -> {
             int newTasksCounter = 0;
-            while (true) {
+            while (!isAllTasksExecuted) {
                 if (newTasksCounter < newTasks.size()) {
                     while (!newTasks.isEmpty()) {
                         Task newTask = newTasks.poll();
@@ -62,12 +64,17 @@ public class Scheduler {
            while (true) {
                Task currentTask = processor.getExecutionTask();
                Task toExecute = decideWhichTaskWillExecuted();
+
+               if (toExecute == null) {
+                   break;
+               }
+
                if (currentTask == null) {
                    removeTaskFromQueues(toExecute);
                    processor.executeTask(toExecute);
                    System.out.println("Задача " + toExecute + " начала выполняться");
                } else if (currentTask.getState() == State.SUSPENDED) {
-                   newTasks.add(processor.getExecutionTask());
+                   finishedTasks.add(processor.getExecutionTask());
                    removeTaskFromQueues(toExecute);
                    processor.executeTask(toExecute);
                    System.out.println("Задача " + toExecute + " начала выполняться");
@@ -96,6 +103,7 @@ public class Scheduler {
                    throw new RuntimeException(e);
                }
            }
+           isAllTasksExecuted = true;
         });
         thread.start();
     }
@@ -108,10 +116,9 @@ public class Scheduler {
             if (readyTaskForCurPriority != null) {
                 maxPriorityTask = Objects.requireNonNullElse(waitingTaskForCurPriority, readyTaskForCurPriority);
             } else {
-                maxPriorityTask = Objects.requireNonNullElse(waitingTaskForCurPriority, maxPriorityTask);
+                maxPriorityTask = waitingTaskForCurPriority != null ? waitingTaskForCurPriority : maxPriorityTask;
             }
         }
-        System.out.println("Задача на выполнение: " + maxPriorityTask);
         return maxPriorityTask;
     }
 
