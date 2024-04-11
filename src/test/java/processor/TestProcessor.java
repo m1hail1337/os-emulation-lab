@@ -14,44 +14,45 @@ public class TestProcessor {
     public void testExecuteTask() throws InterruptedException {
         Processor processor = new Processor();
 
-        int duration1 = 1;
-        Task task1 = new Task(TaskType.MAIN, State.SUSPENDED, Priority.THIRD, duration1);
-        long startTime = System.currentTimeMillis();
-        processor.executeTask(task1);
-        Thread.sleep(1000L * duration1);
-        long elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-        Assertions.assertEquals(duration1, elapsedTime);
+        int duration = 4;
+        Task task = new Task(TaskType.MAIN, State.READY, Priority.THIRD, duration);
+        processor.executeTask(task);
 
-        int duration2 = 2;
-        Task task2 = new Task(TaskType.MAIN, State.SUSPENDED, Priority.THIRD, duration2);
-        startTime = System.currentTimeMillis();
-        processor.executeTask(task2);
-        Thread.sleep(1000L * duration2);
-        elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-        Assertions.assertEquals(duration2, elapsedTime);
+        Thread.sleep(1000L * duration / 2);
+        Assertions.assertEquals(task, processor.getExecutionTask());
+        Assertions.assertEquals(State.RUNNING, processor.getExecutionTask().getState());
 
-        int duration3 = 3;
-        Task task3 = new Task(TaskType.MAIN, State.SUSPENDED, Priority.THIRD, duration3);
-        startTime = System.currentTimeMillis();
-        processor.executeTask(task3);
-        Thread.sleep(1000L * duration3);
-        elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-        Assertions.assertEquals(duration3, elapsedTime);
+        Thread.sleep(1000L * duration);
+        Assertions.assertEquals(State.SUSPENDED, processor.getExecutionTask().getState());
+    }
 
-        int duration4 = 1;
-        Task task4 = new Task(TaskType.MAIN, State.SUSPENDED, Priority.THIRD, duration4);
-        startTime = System.currentTimeMillis();
-        processor.executeTask(task4);
-        Thread.sleep(1000L * duration4);
-        elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-        Assertions.assertEquals(duration4, elapsedTime);
+    @Test
+    public void testExtendedTask() throws InterruptedException {
+        Processor processor = new Processor();
 
-        int duration5 = 1;
-        Task task5 = new Task(TaskType.MAIN, State.SUSPENDED, Priority.THIRD, duration5);
-        startTime = System.currentTimeMillis();
-        processor.executeTask(task5);
-        Thread.sleep(1000L * duration5);
-        elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-        Assertions.assertEquals(duration5, elapsedTime);
+        int duration = 4;
+        Task task = new Task(TaskType.EXTENDED, State.READY, Priority.THIRD, duration);
+        processor.executeTask(task);
+
+        Thread.sleep(1000L * duration / 2);
+        Assertions.assertEquals(task, processor.getExecutionTask());
+        Assertions.assertEquals(State.RUNNING, processor.getExecutionTask().getState());
+
+        Thread.sleep(1000L * duration);
+        Assertions.assertEquals(State.SUSPENDED, processor.getExecutionTask().getState());
+    }
+
+    @Test
+    public void testInterruptCurrentTask() throws InterruptedException {
+        Processor processor = new Processor();
+
+        int duration = 4;
+        Task task = new Task(TaskType.MAIN, State.READY, Priority.THIRD, duration);
+
+        processor.executeTask(task);
+        Thread.sleep(1000L * duration / 2);
+        Assertions.assertEquals(State.RUNNING, processor.getExecutionTask().getState());
+        processor.interruptCurrentTask();
+        Assertions.assertNotEquals(State.READY, processor.getExecutionTask().getState());
     }
 }
