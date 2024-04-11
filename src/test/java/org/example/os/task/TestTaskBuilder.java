@@ -6,7 +6,6 @@ import org.example.os.enums.TaskType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TestTaskBuilder {
