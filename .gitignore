@@ -15,6 +15,12 @@ build/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+.gradle
+.idea
+/gradle
+gradlew
+gradlew.bat
+/build
 
 ### Eclipse ###
 .apt_generated

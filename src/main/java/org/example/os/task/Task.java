@@ -69,7 +69,7 @@ public class Task {
         return Objects.equals(this.type, that.type) &&
                Objects.equals(this.state, that.state) &&
                Objects.equals(this.priority, that.priority) &&
-               Objects.equals(this.duration, that.duration);
+               Objects.equals(this.duration.get(), that.duration.get());
     }
 
     @Override
