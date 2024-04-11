@@ -18,10 +18,24 @@ public class TaskGenerator {
     }
 
     public void generateTasks(int nTasks) {
-        for (int i = 0; i < nTasks; i++) {
+        for (int i = 0; i < nTasks / 2; i++) {
             Task task = generateTask();
             scheduler.getNewTasks().add(task);
         }
+        System.out.println("Nзначально в очереди " + nTasks / 2 + " задач");
+        Thread thread = new Thread(() -> {
+            for (int i = 0; i < nTasks / 2; i++) {
+                Task task = generateTask();
+                scheduler.getNewTasks().add(task);
+                System.out.println("Появилась задача " + task);
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+        thread.start();
     }
 
     private Task generateTask() {
