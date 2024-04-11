@@ -1,43 +1,45 @@
 package org.example.os.processor;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.example.os.enums.State;
+import org.example.os.enums.TaskType;
 import org.example.os.task.Task;
 
 public class Processor {
-    private Task currentMainTask;
-    private Task currentExtendedTask;
-    private boolean isExecuteNow = false;
+    private Task executionTask;
+    private Thread executionThread;
 
-    private void executeTask() {
-        this.isExecuteNow = true;
-        Thread thread = new Thread(() -> {
-            try {
-                Thread.sleep(1000L * currentMainTask.duration());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } finally {
-                this.isExecuteNow = false;
+    public void executeTask(Task task) {
+        executionTask = task;
+        AtomicInteger initialDuration = new AtomicInteger(task.getDuration().get());
+        AtomicInteger timeToFinish = new AtomicInteger(task.getDuration().get());
+        task.setState(State.RUNNING);
+        executionThread = new Thread(() -> {
+            while (timeToFinish.get() != 0) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
+                }
+                if (task.getType() == TaskType.EXTENDED) {
+                    task.getDuration().decrementAndGet();
+                }
+                timeToFinish.decrementAndGet();
             }
+            executionTask.setState(State.SUSPENDED);
+            executionTask.setDuration(initialDuration);
+            System.out.println("Задача " + executionTask + "выполнена");
         });
-        thread.start();
+        executionThread.start();
     }
 
-    public Task getCurrentMainTask() {
-        return currentMainTask;
+    public void interruptCurrentTask() {
+        executionThread.interrupt();
+        System.out.println("Задача " + executionTask + " прервана");
     }
 
-    public void setCurrentMainTask(final Task currentMainTask) {
-        this.currentMainTask = currentMainTask;
-    }
-
-    public Task getCurrentExtendedTask() {
-        return currentExtendedTask;
-    }
-
-    public void setCurrentExtendedTask(final Task currentExtendedTask) {
-        this.currentExtendedTask = currentExtendedTask;
-    }
-
-    public boolean isExecuteNow() {
-        return isExecuteNow;
+    public Task getExecutionTask() {
+        return executionTask;
     }
 }

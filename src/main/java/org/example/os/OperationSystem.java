@@ -9,6 +9,7 @@ public class OperationSystem {
         Processor processor = new Processor();
         Scheduler scheduler = new Scheduler(processor);
         TaskGenerator taskGenerator = new TaskGenerator(scheduler);
-        taskGenerator.launch();
+        taskGenerator.generateTasks(10);
+        scheduler.launchScheduleDaemon();
     }
 }
