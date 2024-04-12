@@ -1,6 +1,5 @@
-package generator;
+package org.example.os.generator;
 
-import org.example.os.generator.TaskGenerator;
 import org.example.os.processor.Processor;
 import org.example.os.scheduler.Scheduler;
 import org.junit.jupiter.api.Assertions;

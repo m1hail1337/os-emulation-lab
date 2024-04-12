@@ -1,10 +1,9 @@
-package scheduler;
+package org.example.os.scheduler;
 
 import org.example.os.enums.Priority;
 import org.example.os.enums.State;
 import org.example.os.enums.TaskType;
 import org.example.os.processor.Processor;
-import org.example.os.scheduler.Scheduler;
 import org.example.os.task.Task;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -49,6 +48,7 @@ public class TestScheduler {
         Assertions.assertEquals(task10, scheduler.getNewTasks().poll());
     }
 
+    // Test in order to get ready tasks
     @Test
     public void testTaskMapping() throws InterruptedException {
         Processor processor = new Processor();
@@ -94,6 +94,41 @@ public class TestScheduler {
     }
 
     @Test
+    public void testWaitingTasks() throws InterruptedException {
+        Processor processor = new Processor();
+        Scheduler scheduler = new Scheduler(processor);
+
+        int interval = 50;
+        int taskDuration = 4;
+        Task task1 = new Task(TaskType.EXTENDED, State.READY, Priority.SECOND, taskDuration);
+        Task task2 = new Task(TaskType.EXTENDED, State.READY, Priority.THIRD, taskDuration);
+
+        scheduler.getNewTasks().add(task1);
+        scheduler.launchScheduleDaemon(interval);
+        while (task1.getState() != State.RUNNING) {
+            Thread.sleep(1);
+        }
+        Assertions.assertEquals(State.RUNNING, task1.getState());
+        scheduler.getNewTasks().add(task2);
+        while (task1.getState() != State.WAITING) {
+            Thread.sleep(1);
+        }
+        // Task2
+        Assertions.assertEquals(State.RUNNING, task2.getState());
+        //Task1
+        Assertions.assertEquals(State.WAITING, task1.getState());
+
+        while (task2.getState() != State.SUSPENDED) {
+            Thread.sleep(1);
+        }
+        while (task1.getState() != State.RUNNING) {
+            Thread.sleep(1);
+        }
+        Assertions.assertEquals(State.RUNNING, task1.getState());
+    }
+
+    // Test in order to get suspended tasks
+    @Test
     public void testFinishedTasks() throws InterruptedException {
         Processor processor = new Processor();
         Scheduler scheduler = new Scheduler(processor);
@@ -138,6 +173,20 @@ public class TestScheduler {
 
         Assertions.assertEquals(task8, scheduler.getFinishedTasks().poll());
         Assertions.assertEquals(task9, scheduler.getFinishedTasks().poll());
+
+        Assertions.assertEquals(State.SUSPENDED, task3.getState());
+        Assertions.assertEquals(State.SUSPENDED, task7.getState());
+
+        Assertions.assertEquals(State.SUSPENDED, task5.getState());
+        Assertions.assertEquals(State.SUSPENDED, task6.getState());
+        Assertions.assertEquals(State.SUSPENDED, task10.getState());
+
+        Assertions.assertEquals(State.SUSPENDED, task1.getState());
+        Assertions.assertEquals(State.SUSPENDED, task4.getState());
+        Assertions.assertEquals(State.SUSPENDED, task2.getState());
+
+        Assertions.assertEquals(State.SUSPENDED, task8.getState());
+        Assertions.assertEquals(State.SUSPENDED, task9.getState());
     }
 
     @Test
